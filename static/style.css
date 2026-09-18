@@ -1,0 +1,84 @@
+/* Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.4);
+}
+
+/* Markdown styling inside Assistant messages */
+.prose-chat {
+    color: #e2e8f0;
+    font-size: 0.925rem;
+    line-height: 1.65;
+}
+.prose-chat p {
+    margin-bottom: 0.75rem;
+}
+.prose-chat p:last-child {
+    margin-bottom: 0;
+}
+.prose-chat ul, .prose-chat ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
+}
+.prose-chat ul {
+    list-style-type: disc;
+}
+.prose-chat ol {
+    list-style-type: decimal;
+}
+.prose-chat li {
+    margin-bottom: 0.25rem;
+}
+.prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4 {
+    color: #ffffff;
+    font-weight: 700;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+.prose-chat blockquote {
+    border-left: 3px solid #6366f1;
+    padding-left: 0.75rem;
+    color: #94a3b8;
+    margin: 0.75rem 0;
+    font-style: italic;
+}
+.prose-chat code {
+    background-color: #1e293b;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+    font-family: monospace;
+    color: #a5b4fc;
+}
+.prose-chat pre {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+}
+
+/* Cursor pulse for typewriter effect */
+.streaming-cursor::after {
+    content: "▋";
+    display: inline-block;
+    vertical-align: baseline;
+    color: #818cf8;
+    animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind AI - Enterprise RAG Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Marked.js for rendering markdown in chat -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 flex h-screen overflow-hidden font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Left Sidebar: Document Management & Knowledge Base -->
+    <aside class="w-80 md:w-96 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0 transition-all duration-300 z-20">
+        <!-- Brand Header -->
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-brain text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">DocuMind AI</h1>
+                    <span class="text-xs text-indigo-400 font-medium tracking-wide flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Enterprise RAG
+                    </span>
+                </div>
+            </div>
+            <a href="/docs" target="_blank" title="OpenAPI Docs" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 text-xs transition">
+                <i class="fa-solid fa-code"></i> API
+            </a>
+        </div>
+
+        <!-- Upload Dropzone -->
+        <div class="p-4">
+            <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/70 rounded-2xl p-5 text-center transition cursor-pointer bg-slate-800/40 hover:bg-slate-800/80 group">
+                <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.md">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition duration-200">
+                    <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                </div>
+                <p class="text-sm font-semibold text-slate-200">อัปโหลดเอกสารใหม่</p>
+                <p class="text-xs text-slate-400 mt-1">ลากไฟล์มาวางที่นี่ หรือ <span class="text-indigo-400 font-medium underline">เลือกไฟล์</span></p>
+                <span class="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-700/60 text-slate-300">PDF, TXT, Markdown (สูงสุด 25MB)</span>
+            </div>
+            <div id="upload-status" class="hidden mt-3 p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-xs flex items-center justify-between">
+                <span class="flex items-center gap-2 text-slate-300" id="upload-status-text">
+                    <i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> กำลังอัปโหลด...
+                </span>
+            </div>
+        </div>
+
+        <!-- Document List Header -->
+        <div class="px-5 py-2 flex items-center justify-between border-t border-slate-800/60">
+            <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">คลังเอกสาร (<span id="doc-count">0</span>)</span>
+            <button id="refresh-docs-btn" class="text-xs text-slate-400 hover:text-indigo-400 transition" title="รีเฟรช">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+
+        <!-- Document List Items -->
+        <div id="document-list" class="flex-1 overflow-y-auto px-4 py-2 space-y-2.5 custom-scrollbar">
+            <!-- Populated via JavaScript -->
+            <div class="text-center py-10 text-slate-500 text-sm">
+                <i class="fa-solid fa-folder-open text-2xl mb-2 block opacity-40"></i>
+                ยังไม่มีเอกสารในระบบ
+            </div>
+        </div>
+
+        <!-- Footer / System Status -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/90 text-xs text-slate-400 space-y-2">
+            <div class="flex items-center justify-between">
+                <span>Vector Engine:</span>
+                <span id="vector-status" class="font-mono text-slate-300">Checking...</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span>LLM Service:</span>
+                <span id="llm-status" class="font-mono text-slate-300">Gemini 3.8 Flash</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat & Retrieval Area -->
+    <main class="flex-1 flex flex-col h-full bg-slate-950 relative overflow-hidden">
+        <!-- Top App Bar -->
+        <header class="h-16 border-b border-slate-800/80 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-md">
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50"></span>
+                    <span class="font-semibold text-sm text-slate-200">Semantic Query Console</span>
+                </div>
+                <span class="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs bg-indigo-950/70 border border-indigo-800 text-indigo-300">
+                    Retriever: Cosine Distance
+                </span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button id="api-key-modal-btn" class="text-xs px-3 py-1.5 rounded-lg border border-indigo-700/80 bg-indigo-950/40 hover:bg-indigo-900/60 text-indigo-300 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-key"></i> <span id="api-key-btn-text">ใส่ Gemini API Key</span>
+                </button>
+                <button id="clear-chat-btn" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> ล้างการสนทนา
+                </button>
+            </div>
+        </header>
+
+        <!-- Chat Conversation Scrollable Container -->
+        <div id="chat-container" class="flex-1 overflow-y-auto px-4 md:px-12 py-8 space-y-6 custom-scrollbar">
+            <!-- Welcome Banner -->
+            <div id="welcome-card" class="max-w-2xl mx-auto my-6 text-center p-8 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-slate-800/80 shadow-2xl">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">ยินดีต้อนรับสู่ DocuMind AI</h2>
+                <p class="text-slate-400 text-sm mb-6 leading-relaxed">
+                    ระบบค้นหาและตอบคำถามจากเอกสารอัจฉริยะ (RAG) อัปโหลดไฟล์ PDF หรือบทความ จากนั้นพิมพ์สอบถามข้อมูลได้ทันที โดยระบบจะสืบค้นเฉพาะข้อมูลจริงพร้อมแนบอ้างอิงทุกครั้ง
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                    <div class="sample-prompt p-3 rounded-xl bg-slate-800/60 hover:bg-indigo-950/40 border border-slate-700/60 hover:border-indigo-500/40 cursor-pointer transition group">
+                        <p class="text-xs text-indigo-300 font-semibold mb-1 group-hover:text-indigo-200">🔍 สรุปภาพรวม</p>
+                        <p class="text-xs text-slate-400">"สรุปสาระสำคัญของเอกสารที่อัปโหลดให้ฟังหน่อย"</p>
+                    </div>
+                    <div class="sample-prompt p-3 rounded-xl bg-slate-800/60 hover:bg-indigo-950/40 border border-slate-700/60 hover:border-indigo-500/40 cursor-pointer transition group">
+                        <p class="text-xs text-indigo-300 font-semibold mb-1 group-hover:text-indigo-200">📑 ตรวจสอบเงื่อนไข</p>
+                        <p class="text-xs text-slate-400">"เงื่อนไขและข้อกำหนดสำคัญมีอะไรบ้าง ระบุหน้าด้วย"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky Chat Input Bar -->
+        <div class="p-4 md:px-12 md:pb-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+            <div class="max-w-4xl mx-auto">
+                <form id="chat-form" class="relative flex items-center bg-slate-900 border border-slate-700/80 focus-within:border-indigo-500 rounded-2xl shadow-xl transition-all duration-200 p-2">
+                    <textarea 
+                        id="query-input" 
+                        rows="1" 
+                        placeholder="พิมพ์คำถามเกี่ยวกับเอกสารที่อัปโหลด... (กด Enter เพื่อส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"
+                        class="w-full bg-transparent text-slate-100 text-sm px-4 py-2.5 focus:outline-none resize-none max-h-32 placeholder:text-slate-500 custom-scrollbar"
+                    ></textarea>
+                    <button 
+                        type="submit" 
+                        id="send-btn"
+                        class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                    >
+                        <i class="fa-solid fa-arrow-up text-sm"></i>
+                    </button>
+                </form>
+                <div class="mt-2 text-center">
+                    <span class="text-[11px] text-slate-500">
+                        ⚡ ขับเคลื่อนด้วย FastAPI, pgvector และ Google Gemini 3.8 Flash • คำตอบอิงตามเอกสารเท่านั้น
+                    </span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- API Key Configuration Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i> ตั้งค่า Google Gemini API Key
+                </h3>
+                <button id="close-modal-btn" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                ใส่ API Key ของคุณเพื่อเปิดการทำงานของโมเดล AI <code>gemini-3.8-flash</code> ตัวจริงสำหรับอ่านเอกสารและตอบคำถามแบบเรียลไทม์
+            </p>
+            <div class="p-3 bg-indigo-950/40 border border-indigo-800/60 rounded-xl text-xs text-indigo-200">
+                💡 รับ API Key ได้ฟรีทันทีที่: <a href="https://aistudio.google.com/" target="_blank" class="underline font-semibold hover:text-white">aistudio.google.com</a>
+            </div>
+            <div>
+                <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Gemini API Key</label>
+                <input type="password" id="api-key-input" placeholder="วาง API Key (เช่น AIzaSy...)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono">
+            </div>
+            <div id="modal-alert" class="hidden text-xs p-2.5 rounded-lg"></div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button id="cancel-modal-btn" class="px-4 py-2 text-xs rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition">ยกเลิก</button>
+                <button id="save-api-key-btn" class="px-4 py-2 text-xs rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md shadow-indigo-600/30 transition">บันทึก & ใช้งาน</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
