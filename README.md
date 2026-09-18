@@ -161,11 +161,3 @@ tests/test_ingestion.py::test_extract_markdown PASSED
 
 ---
 
-## 📝 ตัวอย่างข้อความสำหรับใส่ใน Resume / LinkedIn Portfolio
-
-> **DocuMind AI — Enterprise RAG & Document Intelligence Platform**
-> * *Architected an enterprise-grade Retrieval-Augmented Generation (RAG) platform using **FastAPI**, **PostgreSQL (pgvector)**, and **Google Gemini 3.8 Flash**.*
-> * *Implemented asynchronous background document ingestion supporting PDF and Markdown, featuring recursive character chunking with overlap and vector embeddings.*
-> * *Engineered a real-time Server-Sent Events (SSE) streaming chat API delivering low-latency responses with verifiable document citations and source page attribution.*
-> * *Built secure multi-tenant user isolation with JWT authentication and role-based access control (RBAC).*
-> * *Dockerized services with Docker Compose and achieved comprehensive test coverage using **Pytest**.*
